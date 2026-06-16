@@ -226,10 +226,22 @@ NSString* UITraitsClassString;
     // NOTE: to handle split screen correctly, the application's window bounds must be used as opposed to the screen's bounds.
     CGRect f;
     UIWindow *keyboardWindow = nil;
-    if (@available(iOS 13.0, *)) {
+    if (@available(iOS 15.0, *)) {
         for (UIWindowScene *scene in UIApplication.sharedApplication.connectedScenes) {
             if (scene.activationState == UISceneActivationStateForegroundActive) {
-                keyboardWindow = scene.windows.firstObject;
+                keyboardWindow = scene.keyWindow;
+                break;
+            }
+        }
+    } else if (@available(iOS 13.0, *)) {
+        for (UIWindowScene *scene in UIApplication.sharedApplication.connectedScenes) {
+            if (scene.activationState == UISceneActivationStateForegroundActive) {
+                for (UIWindow *window in scene.windows) {
+                    if ([window isKeyWindow]) {
+                        keyboardWindow = window;
+                        break;
+                    }
+                }
                 break;
             }
         }
