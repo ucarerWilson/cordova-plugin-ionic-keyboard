@@ -224,25 +224,30 @@ NSString* UITraitsClassString;
     }
     NSLog(@"CDVIonicKeyboard: updating frame");
     // NOTE: to handle split screen correctly, the application's window bounds must be used as opposed to the screen's bounds.
+    // Prefer the window that actually hosts the webview - this is guaranteed correct,
+    // unlike scene.windows.firstObject (unordered) or scene.keyWindow (can be a
+    // different window if another plugin briefly makes its own window key).
     CGRect f;
-    UIWindow *keyboardWindow = nil;
-    if (@available(iOS 15.0, *)) {
-        for (UIWindowScene *scene in UIApplication.sharedApplication.connectedScenes) {
-            if (scene.activationState == UISceneActivationStateForegroundActive) {
-                keyboardWindow = scene.keyWindow;
-                break;
-            }
-        }
-    } else if (@available(iOS 13.0, *)) {
-        for (UIWindowScene *scene in UIApplication.sharedApplication.connectedScenes) {
-            if (scene.activationState == UISceneActivationStateForegroundActive) {
-                for (UIWindow *window in scene.windows) {
-                    if ([window isKeyWindow]) {
-                        keyboardWindow = window;
-                        break;
-                    }
+    UIWindow *keyboardWindow = self.webView.window;
+    if (!keyboardWindow) {
+        if (@available(iOS 15.0, *)) {
+            for (UIWindowScene *scene in UIApplication.sharedApplication.connectedScenes) {
+                if (scene.activationState == UISceneActivationStateForegroundActive) {
+                    keyboardWindow = scene.keyWindow;
+                    break;
                 }
-                break;
+            }
+        } else if (@available(iOS 13.0, *)) {
+            for (UIWindowScene *scene in UIApplication.sharedApplication.connectedScenes) {
+                if (scene.activationState == UISceneActivationStateForegroundActive) {
+                    for (UIWindow *window in scene.windows) {
+                        if ([window isKeyWindow]) {
+                            keyboardWindow = window;
+                            break;
+                        }
+                    }
+                    break;
+                }
             }
         }
     }
